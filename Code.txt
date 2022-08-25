@@ -1,0 +1,488 @@
+
+/*
+
+cv2 is used for image processing
+
+
+matplotlib is used for plotting the result obtained
+
+
+
+numpy is used for accessing large arrays */
+
+
+
+import cv2
+
+import numpy as np
+
+from matplotlib import pyplot as plt
+
+
+
+//	data preprocessing
+
+
+
+path='F:\\All247images\\images\\'
+
+images=[]
+
+for i in range(246):
+
+name=path+str(i)+".png"
+
+print(name)
+
+im=cv2.imread(name)
+
+images.append(im)
+
+fi_path="E:\\UNSHARP_IMGS\\"
+
+i=0
+
+for im in images:
+
+
+
+
+
+
+
+
+blur=cv2.GaussianBlur(im, (9,9), 10.0)
+
+unsharp_image = cv2.addWeighted(im, 1.5,blur, -0.5, 0, im)
+
+n=fi_path+str(i)+".png"
+
+print(n)
+
+cv2.imwrite(n,unsharp_image)
+
+i+=1
+
+//CNN code:
+
+
+
+import cv2
+
+import numpy as np
+
+from matplotlib import pyplot as plt
+
+from keras.optimizers import SGD, RMSprop, Adam, Adagrad, Adadelta
+
+import itertools
+
+import pandas as pd
+
+from keras.preprocessing.image import ImageDataGenerator
+
+
+
+path='UNSHARP_IMGS\\'
+
+images=[]
+
+for i in range(246):
+
+name=path+str(i)+".png"
+
+print(name)
+
+im=cv2.imread(name)
+
+print(im.shape)
+
+images.append(im)
+
+print(type(images))
+
+labels = []
+
+for i in range(154):
+
+
+
+
+
+
+
+ 
+labels.append(1)
+
+for i in range(92):
+
+labels.append(0)
+
+len(labels)
+
+labels = np.array(labels)
+
+df = pd.DataFrame({'image': list(images), 'target': labels}, columns=['image', 'target'])
+
+target_count = df.target.value_counts()
+
+print('Class 0:', target_count[0])
+
+print('Class 1:', target_count[1])
+
+print('Proportion:', round(target_count[0] / target_count[1], 2), ': 1')
+
+
+
+target_count.plot(kind='bar', title='Count (target)');
+
+# Class count
+
+count_class_0, count_class_1 = 92,154
+
+
+
+# Divide by class
+
+df_class_0 = df[df['target'] == 0]
+
+df_class_1 = df[df['target'] == 1]
+
+df_class_0_over = df_class_0.sample(count_class_1, replace=True)
+
+df_test_over = pd.concat([df_class_0_over, df_class_1], axis=0)
+
+
+
+print('Random over-sampling:')
+
+print(df_test_over.target.value_counts())
+
+
+
+df_test_over.target.value_counts().plot(kind='bar', title='Count (target)');
+
+x	= df_test_over['image'].values x.shape
+
+
+
+
+
+ 
+type(x)
+
+x = np.array(x)
+
+x.shape
+
+new_list = []
+
+for i in x:
+
+new_list.append(i)
+
+new_list = np.array(new_list)
+
+new_list.shape
+
+y = df_test_over['target']
+
+
+
+//	train and test images
+
+from sklearn.model_selection import train_test_split from sklearn import datasets, linear_model
+
+
+x_train, x_test, y_train, y_test = train_test_split(new_list,y)
+
+print(len(x_train))
+
+print(len(x_test))
+
+print(len(y_train))
+
+print(len(y_test))
+
+
+
+x_train = np.array(x_train)
+
+x_test = np.array(x_test)
+
+y_train = np.array(y_train)
+
+y_test = np.array(y_test)
+
+y_train
+
+x_train.shape
+
+from keras.utils import to_categorical
+
+
+
+
+
+
+
+ 
+
+
+y_train_oh = to_categorical(y_train, num_classes = 2)
+
+y_test_oh = to_categorical(y_test, num_classes = 2)
+
+print(y_train_oh.shape)
+
+print(y_test_oh.shape)
+
+import keras
+
+from keras.models import Sequential,Input,Model
+
+from keras.layers import Dense, Dropout, Flatten
+
+from keras.layers import Conv2D, MaxPooling2D
+
+from keras.layers.normalization import BatchNormalization
+
+from keras.layers.advanced_activations import LeakyReLU
+
+batch_size = 16
+
+epochs = 20
+
+num_classes = 2
+
+from keras.applications import VGG16
+
+//Load the VGG model
+
+
+
+vgg_conv = VGG16(weights='imagenet', include_top=False, input_shape=(288,432, 3))
+
+vgg_conv.summary()
+
+//Freeze the layers except the last 4 layers
+
+
+
+for layer in vgg_conv.layers[:-4]:
+
+layer.trainable = False
+
+
+
+//	Check the trainable status of the individual layers for layer in vgg_conv.layers:
+print(layer, layer.trainable)
+
+
+
+
+
+
+ 
+from keras import models
+
+from keras import layers
+
+from keras import optimizers
+
+
+
+//Create the model
+
+model = models.Sequential()
+
+
+
+//	Add the vgg convolutional base model
+
+model.add(vgg_conv)
+
+
+
+//	Add new layers
+
+model.add(layers.Flatten())
+
+model.add(layers.Dense(1024, activation='relu'))
+
+model.add(layers.Dropout(0.5))
+
+model.add(layers.Dense(2, activation='softmax'))
+
+
+
+//	Show a summary of the model. Check the number of trainable parameters
+
+model.summary()
+
+optimizer=optimizers.RMSprop(lr=1e-6)
+
+model.compile(optimizer = optimizer , loss = "binary_crossentropy", metrics=["accuracy"])
+
+history = model.fit(x_train, y_train_oh, batch_size=batch_size,epochs=epochs
+
+,verbose=1,validation_data=(x_test, y_test_oh))
+
+test_eval = model.evaluate(x_test,y_test_oh,verbose = 1)
+
+print('Test loss:', test_eval[0])
+
+print('Test accuracy:', test_eval[1])
+
+accuracy = history.history['acc']
+
+val_accuracy = history.history['val_acc']
+
+
+
+
+
+
+
+ 
+loss = history.history['loss']
+
+val_loss = history.history['val_loss']
+
+epochs = range(len(accuracy))
+
+plt.plot(epochs, accuracy, 'bo', label='Training accuracy')
+
+plt.plot(epochs, val_accuracy, 'b', label='Validation accuracy')
+
+plt.title('Training and validation accuracy')
+
+plt.legend()
+
+plt.figure()
+
+plt.plot(epochs, loss, 'bo', label='Training loss')
+
+plt.plot(epochs, val_loss, 'b', label='Validation loss')
+
+plt.title('Training and validation loss')
+
+plt.legend()
+
+plt.show()
+
+y_pred = model.predict(x_test)
+
+y_pred = np.argmax(y_pred,axis = 1)
+
+from sklearn.metrics import confusion_matrix
+
+def plot_confusion_matrix(cm, classes,
+
+normalize=False,
+
+title='Confusion matrix',
+
+cmap=plt.cm.Blues):
+
+"""
+
+This function prints and plots the confusion matrix.
+
+Normalization can be applied by setting `normalize=True`.
+
+"""
+
+plt.figure(figsize = (10,10))
+
+plt.imshow(cm, interpolation='nearest', cmap=cmap)
+
+plt.title(title)
+
+
+
+
+
+
+
+ 
+plt.colorbar()
+
+tick_marks = np.arange(len(classes))
+
+plt.xticks(tick_marks, classes, rotation=90)
+
+plt.yticks(tick_marks, classes)
+
+if normalize:
+
+cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+
+
+thresh = cm.max() / 2.
+
+for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+
+plt.text(j, i, cm[i, j],
+
+horizontalalignment="center",
+
+color="white" if cm[i, j] > thresh else "black")
+
+plt.tight_layout()
+
+plt.ylabel('True label')
+
+plt.xlabel('Predicted label')
+
+plt.savefig('importantconfusion_matrix.png', format='png')
+
+
+
+confusion_mtx = confusion_matrix(y_test, y_pred)
+
+dict_characters = {0: '0', 1: '1'}
+
+plot_confusion_matrix(confusion_mtx, classes =
+
+list(dict_characters.values())) //Correct label
+
+correct = np.where(y_pred==y_test)[0]
+
+print "Found %d correct labels" % len(correct)
+
+for i, correct in enumerate(correct[:9]):
+
+plt.subplot(3,3,i+1)
+
+plt.imshow(x_test[correct], cmap='gray', interpolation='none')
+
+plt.title("Predicted {}, Class {}".format(y_pred[correct], y_test[correct]))
+
+
+
+
+
+
+
+ 
+plt.tight_layout()
+
+
+
+//Incorrect label
+
+incorrect = np.where(y_pred!=y_test)[0]
+
+print "Found %d incorrect labels" % len(incorrect)
+
+for i, incorrect in enumerate(incorrect[:9]):
+
+plt.subplot(3,3,i+1)
+
+plt.imshow(x_test[incorrect], cmap='gray', interpolation='none')
+
+plt.title("Predicted {}, Class {}".format(y_pred[incorrect], y_test[incorrect]))
+
+plt.tight_layout()
